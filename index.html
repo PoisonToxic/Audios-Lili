@@ -172,7 +172,7 @@
       showError('ID inválido. Usa letras, números, - o _.');
     }else{
       const id = raw.toLowerCase();
-      const src = `./audios/${encodeURIComponent(id)}.mp3`;
+      const src = `./${encodeURIComponent(id)}.mp3`;
 
       nice.textContent = pretty(id);
       audio.src = src;
@@ -197,6 +197,7 @@
   </script>
 </body>
 </html>
+
 
 
 
