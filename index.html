@@ -4,55 +4,198 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Mensaje de audio</title>
+
+  <!-- Favicon (opcional) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🎧</text></svg>">
+
   <style>
-    body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 2rem; line-height: 1.5; }
-    .wrap { max-width: 600px; margin: 0 auto; text-align: center; }
-    audio { width: 100%; margin-top: 1rem; }
-    .id { opacity: .7; font-size: .95rem; }
-    .error { color: #b00020; margin-top: 1rem; }
-    .hidden { display: none; }
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted:#64748b;
+      --primary:#2563eb;
+      --ring: rgba(37,99,235,.25);
+      --radius:16px;
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0b1220;
+        --card:#0f1629;
+        --text:#e5e7eb;
+        --muted:#93a3b8;
+        --primary:#60a5fa;
+        --ring: rgba(96,165,250,.25);
+      }
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 10% -10%, rgba(37,99,235,.10), transparent 60%),
+        radial-gradient(1000px 700px at 120% 0%, rgba(99,102,241,.10), transparent 60%),
+        var(--bg);
+      display:grid;
+      place-items:center;
+      padding:24px;
+      line-height:1.55;
+    }
+    .card{
+      width:min(640px, 100%);
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,.12);
+      padding:28px;
+      border:1px solid rgba(148,163,184,.15);
+    }
+    header{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:8px;
+    }
+    .logo{
+      width:40px;height:40px;border-radius:10px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,#3b82f6, #8b5cf6);
+      color:white;font-weight:700;
+      box-shadow:0 6px 18px rgba(59,130,246,.35);
+      user-select:none;
+    }
+    h1{font-size:1.35rem;margin:0}
+    .subtitle{margin:4px 0 18px;color:var(--muted);font-size:.95rem}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      font-size:.85rem;color:var(--muted);
+      background:rgba(148,163,184,.12);
+      border:1px solid rgba(148,163,184,.2);
+      padding:6px 10px;border-radius:999px;
+    }
+    .pill strong{color:var(--text)}
+    audio{
+      width:100%;
+      margin:14px 0 8px;
+      border-radius:10px;
+      outline:none;
+      display:block;
+    }
+    .actions{
+      margin-top:10px;display:flex;gap:10px;flex-wrap:wrap
+    }
+    .btn{
+      appearance:none;border:1px solid transparent; cursor:pointer;
+      border-radius:12px;padding:10px 14px;font-weight:600;
+      background:var(--primary);color:white;
+      transition:transform .05s ease, box-shadow .2s ease;
+      box-shadow:0 8px 18px var(--ring);
+    }
+    .btn.secondary{
+      background:transparent;color:var(--text);
+      border-color:rgba(148,163,184,.35);
+    }
+    .btn:active{ transform:translateY(1px) }
+    .muted{color:var(--muted);font-size:.9rem;margin-top:10px}
+    .error{color:#ef4444;margin-top:10px;font-weight:600}
+    footer{margin-top:18px;color:var(--muted);font-size:.8rem;text-align:center}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Escucha tu mensaje</h1>
-    <p class="id" id="labelId"></p>
+  <main class="card" role="main">
+    <header>
+      <!-- Reemplaza las letras por tu logo si quieres -->
+      <div class="logo" aria-hidden="true">QR</div>
+      <div>
+        <h1>Mensaje de audio</h1>
+        <div class="subtitle">Escanea, toca reproducir y escucha.</div>
+      </div>
+    </header>
+
+    <div class="pill" id="pill">
+      <span>Para:</span> <strong id="niceName">—</strong>
+    </div>
+
     <audio id="player" controls preload="none"></audio>
-    <p id="msg" class="error hidden"></p>
-  </div>
+    <div id="msg" class="error" hidden></div>
+
+    <div class="actions">
+      <button id="playBtn" class="btn">▶ Reproducir</button>
+      <a id="downloadLink" class="btn secondary" download>⬇︎ Descargar</a>
+      <button id="copyBtn" class="btn secondary">🔗 Copiar enlace</button>
+    </div>
+
+    <p class="muted">
+      Si no escuchas nada, verifica tu volumen o inténtalo en otro navegador.
+    </p>
+
+    <footer>
+      © <span id="year"></span> Tu Marca · GitHub Pages
+    </footer>
+  </main>
 
   <script>
-    // Lee ?id= de la URL
-    const q = new URLSearchParams(location.search);
-    const rawId = (q.get('id') || '').trim();
+    // Utilidades
+    const qs = new URLSearchParams(location.search);
+    const raw = (qs.get('id') || '').trim();
+    const SAFE = /^[a-z0-9_-]{1,64}$/i;
 
-    // Regla de seguridad/nombre: letras, números, guiones y guion_bajo
-    const SAFE = /^[a-zA-Z0-9_-]{1,64}$/;
-
-    const label = document.getElementById('labelId');
-    const audio = document.getElementById('player');
-    const msg   = document.getElementById('msg');
-
-    function showError(text) {
-      msg.textContent = text;
-      msg.classList.remove('hidden');
-      audio.classList.add('hidden');
+    // Formatea "ana_garcia-2025" → "Ana Garcia 2025"
+    function pretty(s){
+      return s
+        .replace(/[_-]+/g,' ')
+        .trim()
+        .replace(/\s+/g,' ')
+        .toLowerCase()
+        .replace(/(^|\s)\p{L}/gu, m => m.toUpperCase());
     }
 
-    if (!rawId) {
+    const audio = document.getElementById('player');
+    const msg   = document.getElementById('msg');
+    const nice  = document.getElementById('niceName');
+    const playBtn = document.getElementById('playBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const dl = document.getElementById('downloadLink');
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    function showError(t){
+      msg.textContent = t;
+      msg.hidden = false;
+      audio.hidden = true;
+      document.querySelector('.actions').style.display = 'none';
+    }
+
+    if(!raw){
       showError('Falta el parámetro ?id= en la URL.');
-    } else if (!SAFE.test(rawId)) {
-      showError('ID inválido. Usa solo letras, números, guiones (-) o guion_bajo (_).');
-    } else {
-      const id = rawId; // ya validado
-      label.textContent = ID: ${id};
-      audio.src = ./${encodeURIComponent(id)}.mp3;
-      audio.onerror = () => showError(No se encontró el audio para "${id}". Verifica que exista audios/${id}.mp3);
-      // Nota: iOS/Android bloquean autoplay; el usuario debe tocar "Play".
+    }else if(!SAFE.test(raw)){
+      showError('ID inválido. Usa letras, números, - o _.');
+    }else{
+      const id = raw.toLowerCase();
+      const src = `./${encodeURIComponent(id)}.mp3`;
+
+      nice.textContent = pretty(id);
+      audio.src = src;
+      dl.href = src;
+
+      audio.onerror = () => showError(`No se encontró el audio para “${pretty(id)}”. Verifica audios/${id}.mp3`);
+
+      // Botón reproducir (evita bloqueos de autoplay en iOS)
+      playBtn.addEventListener('click', () => audio.play());
+
+      // Copiar enlace actual
+      copyBtn.addEventListener('click', async () => {
+        try{
+          await navigator.clipboard.writeText(location.href);
+          copyBtn.textContent = '✅ Copiado';
+          setTimeout(()=> copyBtn.textContent='🔗 Copiar enlace', 1500);
+        }catch(e){
+          alert('No se pudo copiar. Copia manualmente la barra de direcciones.');
+        }
+      });
     }
   </script>
 </body>
-
 </html>
 
 
