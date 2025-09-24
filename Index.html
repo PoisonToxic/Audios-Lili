@@ -46,10 +46,11 @@
     } else {
       const id = rawId; // ya validado
       label.textContent = `ID: ${id}`;
-      audio.src = `./audios/${encodeURIComponent(id)}.mp3`;
+      audio.src = `./${encodeURIComponent(id)}.mp3`;
       audio.onerror = () => showError(`No se encontró el audio para "${id}". Verifica que exista audios/${id}.mp3`);
       // Nota: iOS/Android bloquean autoplay; el usuario debe tocar "Play".
     }
   </script>
 </body>
+
 </html>
