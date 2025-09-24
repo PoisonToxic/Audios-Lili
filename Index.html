@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mensaje de audio</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 2rem; line-height: 1.5; }
+    .wrap { max-width: 600px; margin: 0 auto; text-align: center; }
+    audio { width: 100%; margin-top: 1rem; }
+    .id { opacity: .7; font-size: .95rem; }
+    .error { color: #b00020; margin-top: 1rem; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Escucha tu mensaje</h1>
+    <p class="id" id="labelId"></p>
+    <audio id="player" controls preload="none"></audio>
+    <p id="msg" class="error hidden"></p>
+  </div>
+
+  <script>
+    // Lee ?id= de la URL
+    const q = new URLSearchParams(location.search);
+    const rawId = (q.get('id') || '').trim();
+
+    // Regla de seguridad/nombre: letras, números, guiones y guion_bajo
+    const SAFE = /^[a-zA-Z0-9_-]{1,64}$/;
+
+    const label = document.getElementById('labelId');
+    const audio = document.getElementById('player');
+    const msg   = document.getElementById('msg');
+
+    function showError(text) {
+      msg.textContent = text;
+      msg.classList.remove('hidden');
+      audio.classList.add('hidden');
+    }
+
+    if (!rawId) {
+      showError('Falta el parámetro ?id= en la URL.');
+    } else if (!SAFE.test(rawId)) {
+      showError('ID inválido. Usa solo letras, números, guiones (-) o guion_bajo (_).');
+    } else {
+      const id = rawId; // ya validado
+      label.textContent = `ID: ${id}`;
+      audio.src = `./audios/${encodeURIComponent(id)}.mp3`;
+      audio.onerror = () => showError(`No se encontró el audio para "${id}". Verifica que exista audios/${id}.mp3`);
+      // Nota: iOS/Android bloquean autoplay; el usuario debe tocar "Play".
+    }
+  </script>
+</body>
+</html>
