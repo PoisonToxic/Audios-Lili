@@ -46,7 +46,7 @@
     } else {
       const id = rawId; // ya validado
       label.textContent = `ID: ${id}`;
-      audio.src = `./${encodeURIComponent(id)}.mp3`;
+      audio.src = `.Audios-Lili/${encodeURIComponent(id)}.mp3`;
       audio.onerror = () => showError(`No se encontró el audio para "${id}". Verifica que exista audios/${id}.mp3`);
       // Nota: iOS/Android bloquean autoplay; el usuario debe tocar "Play".
     }
@@ -54,3 +54,4 @@
 </body>
 
 </html>
+
