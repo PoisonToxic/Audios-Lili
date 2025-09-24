@@ -178,7 +178,7 @@
       audio.src = src;
       dl.href = src;
 
-      audio.onerror = () => showError(`No se encontró el audio para “${pretty(id)}”. Verifica la raiz del sitio`);
+      audio.onerror = () => showError(`No se encontró el audio “${id}.mp3” en la raíz del sitio.`);
 
       // Botón reproducir (evita bloqueos de autoplay en iOS)
       playBtn.addEventListener('click', () => audio.play());
@@ -197,6 +197,7 @@
   </script>
 </body>
 </html>
+
 
 
 
